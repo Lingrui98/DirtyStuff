@@ -3,7 +3,7 @@ import platform
 import json
 
 
-machine_config = '/home/zyy/.config/machine_state/dispatch.json'
+machine_config = '/home/glr/DirtyStuff/dispatch.json'
 
 def get_machine_hash(task='xiangshan'):
     hash_ids = {}
@@ -15,7 +15,7 @@ def get_machine_hash(task='xiangshan'):
         for i in range(0, js[host]['load']):
             hash_ids[host].append(cursor)
             cursor += 1
-        print(host, hash_ids[host])
+        # print(host, hash_ids[host])
     hostname = platform.node()
     return hash_ids[hostname], cursor
 

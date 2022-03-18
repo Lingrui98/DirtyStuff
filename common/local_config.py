@@ -32,11 +32,11 @@ gathered_spec2006_data_dir = os.environ['spec2006_run_dir']
 
 simpoints_file = {
         '17': 'resources/simpoint_cpt_desc/simpoints17.json',
-        '06': 'resources/simpoint_cpt_desc/simpoints06.json',
+        '06': '/home/glr/gem5_data_proc/simpoint_coverage0.3.json',
         }
 
 simpoints_file_short = {
         '17': '/no/where',
-        '06': 'resources/simpoint_cpt_desc/simpoints06_cover0.5.json', # 231 points
+        '06': '/home/glr/gem5_data_proc/simpoint_coverage0.3.json', # 231 points
         }
 
