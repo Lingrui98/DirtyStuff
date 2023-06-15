@@ -53,6 +53,7 @@ parser = cpt_desc.parser
 parser.add_argument('-t', '--debug-tick', action='store', type=int)
 parser.add_argument('-C', '--config', action='store', type=str)
 parser.add_argument('-n', '--name' , action='store', type=str)
+parser.add_argument('-j', '--jobs', action='store', type=str)
 
 args = cpt_desc.parse_args()
 
@@ -62,6 +63,9 @@ if args.config is not None:
     CurConf = eval(f'tc.{args.config}')
 else:
     CurConf = tc.NanhuDRAMSim
+
+if args.jons is not None:
+    num_threads = int(args.jobs)
 
 cwd = os.getcwd()
 os.chdir(gem5_base)
