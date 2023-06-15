@@ -325,6 +325,14 @@ class NanhuNoL3(SimulatorTask):
                 '--l2_assoc': 8,
                 }
         self.add_dict_options(self.dict_conf)
+        
+class NanhuFTB(NanhuNoL3):
+    pass
+
+class NanhuFTBWithDB(NanhuFTB):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.add_list_options(['--enable-bp-db'])
 
 class NanhuWithRationalL1NoL3(NanhuNoL3):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
@@ -348,6 +356,56 @@ class NanhuConfig(NanhuWithRationalL1NoL3):
                 '--l3_assoc': 6,
                 }
         self.add_dict_options(self.dict_conf)
+        
+class NanhuDRAMSim(NanhuConfig):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.dict_conf = {
+            '--mem-type': 'DRAMsim3',
+            '--dramsim3-ini': '$gem5_home/xiangshan_DDR4_8Gb_x8_2400.ini',
+            '--l2-hwp-type': 'SMSPrefetcher',
+        }
+        self.add_dict_options(self.dict_conf, replace=True)
+        
+class NanhuDRAMSimWithJA(NanhuDRAMSim):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--enable-jump-ahead-predictor',
+                ]
+        self.add_list_options(self.list_conf)
+
+class NanhuDRAMSimWithLP(NanhuDRAMSim):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--enable-loop-predictor',
+                ]
+        self.add_list_options(self.list_conf)
+
+class NanhuDRAMSimWithLPLB(NanhuDRAMSimWithLP):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--enable-loop-buffer',
+                ]
+        self.add_list_options(self.list_conf)
+
+class NanhuDRAMSimWithLPJA(NanhuDRAMSimWithLP):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--enable-jump-ahead-predictor',
+                ]
+        self.add_list_options(self.list_conf)
+
+class NanhuDRAMSimWithLPLBJA(NanhuDRAMSimWithLPJA):
+    def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):
+        super().__init__(exe, top_data_dir, task_name, workload, sub_phase)
+        self.list_conf = [
+                '--enable-loop-buffer',
+                ]
+        self.add_list_options(self.list_conf)
 
 class Nanhu32kIC(NanhuConfig):
     def __init__(self, exe: str, top_data_dir: str, task_name: str, workload: str, sub_phase: int):

@@ -16,14 +16,13 @@ import gem5tasks.typical_o3_config as tc
 debug = False
 
 # The number of threads
-num_threads = 20
+num_threads = 120
 
 # SPEC 17 or 06
 ver = '06'
 
 # The root dir of GEM5
-# gem5_base = '/nfs-nvme/home/zhouyaoyang/projects/xs-gem5'
-gem5_base = '/nfs-nvme/home/zhouyaoyang/projects/xs-gem5-frontend'
+gem5_base = '/nfs/home/goulingrui/project/GEM5'
 exe = f'{gem5_base}/build/RISCV/gem5.opt'
 fs_script = f'{gem5_base}/configs/example/fs.py'
 
@@ -31,10 +30,10 @@ fs_script = f'{gem5_base}/configs/example/fs.py'
 # The RISC-V Generic checkpoint format is defined by Xiangshan Team
 # Brief introduction here:
 # https://github.com/OpenXiangShan/XiangShan-doc/blob/main/tutorial/others/Checkpoint%E7%9A%84%E7%94%9F%E6%88%90.md
-data_dir = '/nfs-nvme/home/share/checkpoints_profiles/spec06_rv64gc_o2_50m/take_cpt' # cpt dir
+data_dir = '/nfs-nvme/home/share/checkpoints_profiles/spec06_rv64gc_o2_20m/take_cpt' # cpt dir
 
 # The directory to store GEM5 outputs (logs, configs, and stats)
-top_output_dir = '/nfs-nvme/home/zhouyaoyang/gem5-results' # output dir
+top_output_dir = '/nfs/home/goulingrui/expri_results/gem5/' # output dir
 
 cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         is_simpoint=True,  # Set it True when you are using checkpoints taken with NEMU and SimPoint method
@@ -43,15 +42,17 @@ cpt_desc = CptBatchDescription(data_dir, exe, top_output_dir, ver,
         # This option chooses the checkpoint filter
         # The checkpoint filter indicates whick checkpoints should be executed
         # The checkpoint filter is loaded from a json file, to local_config.py to see details
-        # simpoints_file="resources/simpoint_cpt_desc/simpoints06_branch_picks.json",
+        # simpoints_file="/nfs-nvme/home/share/zyy/simpoints06_branch_picks.json",
+        simpoints_file="/nfs-nvme/home/share/checkpoints_profiles/spec06_rv64gc_o2_20m/simpoint_summary.json",
         # simpoints_file="resources/simpoint_cpt_desc/simpoints06_cover0.50_top5.json",
-        simpoints_file="resources/simpoint_cpt_desc/simpoints06_icache_sensitive.json",
-        )
+        # simpoints_file="resources/simpoint_cpt_desc/simpoints06_icache_sensitive.json",
+        exe_threads=1,)
 
 parser = cpt_desc.parser
 
 parser.add_argument('-t', '--debug-tick', action='store', type=int)
 parser.add_argument('-C', '--config', action='store', type=str)
+parser.add_argument('-n', '--name' , action='store', type=str)
 
 args = cpt_desc.parse_args()
 
@@ -60,13 +61,15 @@ if args.config is not None:
     # Example configs are defined in typical_o3_config.py
     CurConf = eval(f'tc.{args.config}')
 else:
-    CurConf = tc.NanhuNoL3
+    CurConf = tc.NanhuDRAMSim
 
 cwd = os.getcwd()
 os.chdir(gem5_base)
 tag = sh.git('rev-parse --short HEAD'.split(' ')).strip()
 
 task_name = f'frontend_{ver}/{CurConf.__name__}-{tag}'
+if args.name is not None:
+    task_name += f'-{args.name}'
 cpt_desc.set_task_filter()
 cpt_desc.set_conf(CurConf, task_name)
 cpt_desc.filter_tasks()
@@ -87,6 +90,8 @@ backend_flags = omega_flags + check_flags + mem_flags + nosq_flags + dq_flags + 
         inst_flags + fault_flags
 frontend_flags = fetch_flags + fault_flags + inst_flags
 
+# debug_flags = ["AddrRanges","DecoupleBP",'DecoupleBPProbe','Fetch','Commit',\
+#     'DecoupleBPRAS','Override','FTB','DecoupleBPVerbose','FTBTAGE']
 debug_flags = []
 debug_tick = None
 
@@ -121,15 +126,17 @@ for task in cpt_desc.tasks:
         # This option provides us a method to override the "GCPT restorer" when loading
         # the RISC-V generic checkpoint.
         # resource/gcpt_restore can be found in https://github.com/OpenXiangShan/NEMU/tree/cpp-gem5
-        '--gcpt-restorer': '/nfs-nvme/home/zhouyaoyang/projects/gem5-ref-sd-nemu/resource/gcpt_restore/build/gcpt.bin',
+        # '--gcpt-restorer': '/nfs/home/goulingrui/project/NEMU/resource/gcpt_restore/build/gcpt.bin',
 
         # '--benchmark-stdout': osp.join(task.log_dir, 'workload_out.txt'),
         # '--benchmark-stderr': osp.join(task.log_dir, 'workload_err.txt'),
-        '--maxinsts': str(100*10**6),
-        '--warmup-insts-no-switch': str(50*10**6),
+        '--maxinsts': str(40*10**6),
+        '--warmup-insts-no-switch': str(20*10**6),
+        # '--bp-type': 'DecoupledBPUWithFTB'
         # '--gcpt-repeat-interval': str(10**4),
     })
     task.format_options()
 
+cpt_desc.set_numactl(selected_cores=list(range(0, num_threads)))
 cpt_desc.run(num_threads, debug)
 
